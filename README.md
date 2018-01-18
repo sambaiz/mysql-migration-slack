@@ -1,6 +1,8 @@
 ## mysql-migration-slack 
 
-When [goose](https://github.com/pressly/goose) repository is merged to master, create a new version and display the migration button on slack.
+When [goose](https://github.com/pressly/goose) repository is merged to master, create a new version and post the migration button to slack.
+
+![Button](button.gif)
 
 - Not necessary to change the version even if it postpone to apply due to review and fix
 - Easy to start migration and inform
@@ -39,6 +41,8 @@ DROP TABLE testtable;
 
 If there is a new sql, create a new version and post migration button to slack.
 
+Use user key (readable/writable) for checkout key.
+
 ```
 version: 2
 jobs:
@@ -50,22 +54,19 @@ jobs:
         - master
     steps:
       - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "SO:ME:FIN:G:ER:PR:IN:T"
       - run:
           name: Create new version
           command: |
             if [ -e *.sql ]; then
               VERSION=$(ls -U1 goose | wc -l | xargs expr 1 + | xargs printf %05d)
-              FILENAME=$(find . -name "*.sql" -maxdepth 1 | head | xargs basename)
+              FILENAME=$(find . -maxdepth 1 -name "*.sql" | head | xargs basename)
               mv ${FILENAME} goose/${VERSION}_${FILENAME}
               git config --global user.email "circleci@example.com"
               git config --global user.name "CircleCI"
               git add .
-              git commit -m "version ${VERSION}"
+              git commit -m "[CI] version ${VERSION}"
               git push origin master
               COMMIT=$(git rev-parse HEAD)
-              curl https://*****.ngrok.io?version=${VERSION}&filename=${FILENAME}&commit=${COMMIT}
+              curl -H "Authorization: Basic $(echo -n 'foobar:dolphins' | base64)" "https://*****.ngrok.io/auth/message?version=${VERSION}&filename=${FILENAME}&commit=${COMMIT}"
             fi
 ```
