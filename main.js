@@ -48,12 +48,12 @@ slackMessages.action('migrate', (payload, respond) => {
 
   exec(
     // Attention to command injection
-    `git clone github.com/${repositoryName} && cd ${repositoryName}/goose && goose mysql ${mySQLConf} up`, 
+    `git clone github.com/${repositoryName} && cd ${repositoryName}/goose && goose mysql "${mySQLConf}" up`, 
     (err, stdout, stderr) => {
       replacement.attachments[0].fields = [
         { 
           "title": "State",
-          "value": (err || stderr) ? "Error" : "Success",
+          "value": (err || stderr) ? `Error(${stderr || err})` : "Success",
           "short": false
         }
       ];
